@@ -1,0 +1,174 @@
+
+<!-- Matt Macholz -->
+
+<html><head><meta http-equiv="Content-Type" content="text/html; charset=windows-1252">
+<title>Checker</title>
+<script type="text/javascript">
+
+function check()
+{
+	// Clear results box to display fresh results
+	clear_results();
+
+	// Get the input text
+	var text = document.getElementById("text").value;
+
+	//Log initial expression to console
+	console.log("before:#"+text+"#");
+
+	//Strip out any white space
+	text = text.replace(/\s/g, '');
+
+	//looks for any character that is a +, -, *, /, (, ), and surrounds it 
+	// with a space on either side
+	text = text.replace(/([+\-*\/\(\)])/g, " $1 ");
+
+	//remove the extra spaces on either end of the string
+	text = text.trim();
+
+	//Replace two or more internal spaces with a single space
+	text = text.replace(/\s\s+/g, ' ')
+
+	//Log after text
+	console.log("after: #"+text+"#");
+
+	// Return cleaned up expression to text box
+	document.getElementById("text").value = text;
+	
+	// Split the text into tokens
+	var tokens = text.split(/\s+/);
+
+	//create a counter for errors
+	var errorcount = 0;
+
+	//create a counter for open and closed parentheses
+	var openparentheses = 0;
+
+	// Quick check of first token for validity
+	if (/[^0-9\(]/.test(tokens[0]))
+	{
+		append_result("Error: first character cannot be \"" 
+			+ tokens[0] + "\"\n");
+		errorcount++;
+	}
+	
+	// Iterate through tokens and do something interesting
+	for(i=0; i<tokens.length; i++)
+	{
+		// Check for invalid tokens
+		if (/[^0-9+\-*/\(\)]/.test(tokens[i]))
+		{
+			append_result("Error at character " + parseInt(i+1) + ": illegal token \"" + tokens[i] + "\"\n");
+			errorcount++;
+		}
+
+		//Detect if all the parentheses match up
+		if (tokens[i] == '(')
+			openparentheses++;
+		else if (tokens[i] == ')')
+			openparentheses--;
+
+		//Detect a divide by 0 error
+		if (tokens[i] == '/' && tokens[i+1] == '0')
+		{
+			append_result("Error at character " + parseInt(i+1) + ": you cannot divde anything by 0\n");
+			errorcount++;
+		}
+
+
+		// Detect two operators in a row (incl right paren) that are not allowed
+		if ( /[+\-*/]/.test(tokens[i]) && /[+*/\)]/.test(tokens[i+1]) )
+		{
+			append_result("Error at character " + parseInt(i+1) + " and character " + parseInt(i+2) + ": you cannot have " + tokens[i] + " followed by " + tokens[i+1] + "\n");
+			errorcount++;
+		}
+		
+		// Maybe don't need this anymore?
+		//do_something_with_token(i, tokens[i]);
+	}
+
+	// Quick check of last token for validity
+	if (/[^0-9\)]/.test(tokens[tokens.length-1]))
+	{
+		append_result("Error: last character cannot be \"" + tokens[tokens.length-1] + "\"\n");
+		errorcount++;
+	}
+	
+	// Output the results
+	if (errorcount == 0 && openparentheses == 0)
+	{
+		append_result("ACCEPT");
+	}
+	else
+	{
+		if (errorcount != 0)
+			append_result("\nCount of errors found: " + errorcount + "\n");
+		if (openparentheses != 0)
+		{
+		append_result("Number of open parentheses: " + 
+			Math.abs(openparentheses) + "\n");
+		}
+		append_result("REJECT");
+	}
+
+}
+
+function do_something_with_token(i, token)
+{
+	append_result("token " + i + ": " + token + " " + tokenName(token) + "\n");
+}
+
+function isAddOp(token)
+{
+	return (token == '+' || token == '-');
+}
+
+function isMulOp(token)
+{
+	return (token == '*' || token == '/');
+}
+
+function isInteger(token)
+{
+	return !isNaN(token);
+}
+
+function tokenName(token)
+{
+	if (isAddOp(token))
+		return "ADOP";
+	else if (isMulOp(token))
+		return "MULOP";
+	else if (isInteger(token))
+		return "INTEGER";
+	else
+		return "OTHER";
+}
+
+function append_result(token)
+{
+	document.getElementById("results").value += token;
+}
+
+function clear_results()
+{
+	document.resultform.reset();
+}
+
+</script>
+<style></style></head>
+<body bgcolor="#FFFFCC">
+<h1>Checker</h1>
+<p>Copy and paste, or type, some text to be checked below and click "Check". </p>
+<form name="checker" action="javascript:check()">
+	<p><textarea rows="9" id="text" name="text" cols="99"></textarea><br>
+	<input type="submit" value="Check" name="">
+	<input type="reset" value="Reset" name="" onclick="javascript:clear_results()"></p>
+</form>
+<h2>Result</h2>
+<form name="resultform">
+	<p><textarea rows="10" id="results" name="results" cols="99" readonly="readonly"></textarea></p>
+</form>
+<p>&nbsp;</p>
+
+</body></html>
